@@ -1,0 +1,35 @@
+version: '3'
+services:
+  idlewardb:
+    image: postgres:14.1-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=idleuser
+      - POSTGRES_PASSWORD=idlepass
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
+    volumes:
+      - ./db/init.sql:/docker-entrypoint-initdb.d/create_tables.sql
+      - idlewardb:/var/lib/postgresql/data
+  server:
+    build: src/
+    command: python3 ./main.py
+    ports:
+      - 8443:8443
+    depends_on:
+      - idlewardb
+    environment:
+      - NODE_ENV="dev"
+      - DB_HOST="idlewardb"
+      - DB_PORT=5432
+      - DB_USER="idleuser"
+      - DB_PASSWORD="idlepass"
+      - DB_NAME="idlewardb"
+    links:
+      - idlewardb
+    volumes:
+      - './:/src'
+volumes:
+  idlewardb:
+    driver: local
